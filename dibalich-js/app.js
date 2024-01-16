@@ -28,33 +28,21 @@ const debounce = (func, delay) => {
 const homePage = document.body.classList.contains("home");
 const resultDisplayDelay = 300;
 
-// Declare variables to store references to various DOM elements
-let propertyStatus; // Property status dropdown
-let bedroom; // Bedroom input field
-let bathroom; // Bathroom input field
-let car; // Car input field
-let propertyInput; // Property input field
-let selectSort; // Sorting dropdown
-let result; // NodeList of all results
-let openResult; // NodeList of open results
-let soldResult; // NodeList of sold results
-
 // Execute the following code when the DOM is fully loaded
-document.addEventListener("DOMContentLoaded", () => {
-    // Assign DOM elements to the declared variables
-    propertyStatus = document.getElementById("property-status");
-    bedroom = document.getElementById("bedroom");
-    bathroom = document.getElementById("bathroom");
-    car = document.getElementById("car");
-    propertyInput = document.getElementById("property-input");
-    selectSort = document.getElementById("date-filter");
-    result = document.querySelectorAll(".res");
-    openResult = document.querySelectorAll(".open-res");
-    soldResult = document.querySelectorAll(".sold-res");
-});
+// Assign DOM elements to the declared variables
+const propertyStatus = document.getElementById("property-status");
+const bedroom = document.getElementById("bedroom");
+const bathroom = document.getElementById("bathroom");
+const car = document.getElementById("car");
+const propertyInput = document.getElementById("property-input");
+const selectSort = document.getElementById("date-filter");
+const result = document.querySelectorAll(".res");
+const openResult = document.querySelectorAll(".open-res");
+const soldResult = document.querySelectorAll(".sold-res");
 
 // Get reference to the container that holds the property results
 const resContainer = document.getElementById("res-container");
+const loadMore = document.getElementById("load-more");
 
 // Create a MutationObserver to watch for changes in the DOM
 const observer = new MutationObserver((mutations) => {
@@ -68,6 +56,9 @@ const observer = new MutationObserver((mutations) => {
             resContainer.children.length === 0
                 ? (noProperty.style.display = "block")
                 : (noProperty.style.display = "none");
+            resContainer.children.length >= 12
+                ? (loadMore.style.display = "none")
+                : (loadMore.style.display = "inline-block");
         }
     });
 });
@@ -75,8 +66,6 @@ const observer = new MutationObserver((mutations) => {
 // Configure the observer to listen for specific types of changes
 const config = {
     childList: true, // Watch for changes in the child nodes
-    attributes: true, // Watch for changes in attributes
-    subtree: true, // Watch for changes in the entire subtree of the target
 };
 
 // Start observing the changes in the resContainer with the specified configuration
@@ -147,24 +136,28 @@ const toggleResultClass = (results) => {
 // Function to filter results based on the provided criteria
 const filterResult = (selected, inpVal, displayValue) => {
     // Extract and normalize the address text from the selected result
-    const addressText = selected
-        .querySelector(".result-address")
-        .textContent.trim()
-        .toLowerCase();
+    try {
+        const addressText = selected
+            .querySelector(".result-address")
+            .textContent.trim()
+            .toLowerCase();
 
-    // Check if the address text includes the input value or if the input value is empty
-    if (addressText.includes(inpVal) || inpVal.length === 0) {
-        // If the criteria match, set the display property to the specified value
-        selected.style.display = displayValue;
-    } else {
-        // If the criteria do not match, hide the result
-        selected.style.display = "none";
+        // Check if the address text includes the input value or if the input value is empty
+        if (addressText.includes(inpVal) || inpVal.length === 0) {
+            // If the criteria match, set the display property to the specified value
+            selected.style.display = displayValue;
+        } else {
+            // If the criteria do not match, hide the result
+            selected.style.display = "none";
+        }
+    } catch (err) {
+        console.error(err);
     }
 };
 
 // ---------------------------------------------------
 
-loadMoreResultsHandler();
+// loadMoreResultsHandler();
 
 // ---------------------------------------------------
 
@@ -180,7 +173,7 @@ const debouncedInputChange = debounce(() => {
         });
         toggleResultClass(results);
     };
-    loadMoreResultsHandler();
+    // loadMoreResultsHandler();
 
     // Filter and display results for different result types
     filterAndDisplay(result, "block");
@@ -188,96 +181,54 @@ const debouncedInputChange = debounce(() => {
     filterAndDisplay(soldResult, "block");
 }, resultDisplayDelay); // Delay before invoking the debounced function
 
-// Function to handle loading more results
-function loadMoreResultsHandler() {
-    // Get visible results for all and sold properties
-    const originalDivsAll = getVisibleResults("res");
-    const originalDivsSold = getVisibleResults("sold-res");
-    const originalDivsOpen = getVisibleResults("open-res");
-
-    const homeResult = getVisibleResults("result");
-
-    const loadMore = document.getElementById("load-more");
-
+function displayInitialResults() {
     // Get the visible divs for all and sold properties (limiting to 12 initially)
     const visibleDivsSold = document.querySelectorAll(
         ".sold-res:nth-child(-n+12)"
     );
     const visibleDivsAll = document.querySelectorAll(".res:nth-child(-n+12)");
-    const visibleDivsAllHome = document.querySelectorAll(
-        ".res:nth-child(-n+6)"
-    );
+
     // const visibleDivsOpen = document.querySelectorAll(".res:nth-child(-n+6)");
-
-    if (resContainer) {
-        resContainer.innerHTML = "";
-    }
-
     if (homePage) {
-        visibleDivsAllHome.forEach((ele) => resContainer.appendChild(ele));
+        console.log(resContainer.children.length);
+        if (resContainer.children.length > 6) {
+            // Remove extra children starting from the 7th child
+            for (let i = 2; i < resContainer.children.length; i++) {
+                resContainer.removeChild(resContainer.children[i]);
+                console.log("removed");
+            }
+        }
     } else {
-        visibleDivsAll.forEach((ele) => resContainer.appendChild(ele));
-        visibleDivsSold.forEach((ele) => resContainer.appendChild(ele));
-        originalDivsOpen.forEach((ele) => resContainer.appendChild(ele));
-    }
-    // Clear the resContainer and append the visible divs
-
-    // Function to load more divs
-    function loadMoreDivs() {
-        const nextSetOfDivs = createNextSetOfDivs();
-        // Append the next set of divs to the container
-        resContainer.append(...nextSetOfDivs);
-
-        // You can add your condition here if needed
-
-        // Check if all divs have been appended, hide the "Load More" button if true
-        if (
-            originalDivsAll.length === resContainer.children.length ||
-            originalDivsSold.length === resContainer.children.length
-        ) {
-            loadMore.style.display = "none";
+        if (getSelectedOptionLabel(propertyStatus) !== "open") {
+            console.log(getSelectedOptionLabel(propertyStatus));
+            resContainer.innerHTML = "";
+            visibleDivsAll.forEach((res) => resContainer.appendChild(res));
+            visibleDivsSold.forEach((res) => resContainer.appendChild(res));
         }
-    }
-
-    // Function to create the next set of divs
-    function createNextSetOfDivs() {
-        const nextSet = [];
-
-        const startIndex = resContainer.children.length; // Index to start from the last appended div
-
-        for (
-            let i = startIndex;
-            i < startIndex + 12 && (originalDivsAll[i] || originalDivsSold[i]);
-            i++
-        ) {
-            // Clone the next set of divs from both originalDivsAll and originalDivsSold
-
-            let newDiv;
-
-            try {
-                newDiv =
-                    originalDivsAll[i]?.cloneNode(true) ||
-                    originalDivsSold[i]?.cloneNode(true);
-            } catch (error) {
-                console.error(error);
-            }
-
-            if (newDiv) {
-                nextSet.push(newDiv);
-            }
-        }
-
-        return nextSet;
-    }
-
-    // Attach the loadMoreDivs function to the "Load More" button click event
-    if (loadMore) {
-        loadMore.addEventListener("click", loadMoreDivs);
     }
 }
 
 // -------------------------------------------------------------------------------------------------------------------------------------------------
+// show & Hide loadmore Button
 
+const createShowResultsOnce = () => {
+    let flag = false;
+
+    return function showAllResults() {
+        if (!flag) {
+            result.forEach((res) => {
+                resContainer.appendChild(res);
+            });
+            loadMore.style.display = "none";
+            flag = true; // Set flag to true after execution
+        }
+    };
+};
+
+// Create an instance of showAllResults with closure
+const showResultsOnce = createShowResultsOnce();
+
+//  ----------------------------------------------------------------------------------------------------
 // Execute the following code when the DOM is fully loaded
 document.addEventListener("DOMContentLoaded", () => {
     // Redirect the page based on the selected option
@@ -321,19 +272,31 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         }
     };
+    const firstChangeFlags = {};
 
     // Function to debounce changes in the filter input values
     const debouncedFilterChange = (filterElement, filterParam, resultClass) =>
         debounce(() => {
-            const filterRes = getVisibleResults(resultClass);
+            const isFirstChange = firstChangeFlags[filterElement.id];
 
-            // Filter results based on the selected criteria and display values
-            filterRes.forEach((res) =>
-                filterResultWithSelected(res, filterElement, filterParam)
-            );
+            if (isFirstChange === undefined || isFirstChange) {
+                const filterRes = getVisibleResults(resultClass);
+
+                // Filter results based on the selected criteria and display values
+                filterRes.forEach((res) =>
+                    filterResultWithSelected(res, filterElement, filterParam)
+                );
+                toggleResultClass(filterRes);
+
+                firstChangeFlags[filterElement.id] = false;
+            } else {
+                result.forEach((res) =>
+                    filterResultWithSelected(res, filterElement, filterParam)
+                );
+                toggleResultClass(result);
+            }
 
             // Toggle the result class based on visibility
-            toggleResultClass(filterRes);
         }, resultDisplayDelay);
 
     // Usage of debouncedFilterChange for different filter elements
@@ -344,6 +307,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Event listeners for input and change events
 
     propertyInput.addEventListener("input", debouncedInputChange);
+    // propertyInput.addEventListener("click", showResultsOnce);
     propertyStatus.addEventListener("change", handleStatusChange);
     bedroom.addEventListener("change", debouncedValChange);
     bathroom.addEventListener("change", debouncedBathChange);
@@ -381,21 +345,43 @@ document.addEventListener("DOMContentLoaded", () => {
         };
 
         // Function to debounce changes in the filter input values
+        const firstChangeFlags = {};
+
+        // Function to debounce changes in the filter input values
         const debouncedFilterChange = (
             filterElement,
             filterParam,
             resultClass
         ) =>
             debounce(() => {
-                const filterRes = getVisibleResults(resultClass);
+                const isFirstChange = firstChangeFlags[filterElement.id];
 
-                // Filter results based on the selected criteria and display values
-                filterRes.forEach((res) =>
-                    filterResultWithSelected(res, filterElement, filterParam)
-                );
+                if (isFirstChange === undefined || isFirstChange) {
+                    const filterRes = getVisibleResults(resultClass);
+
+                    // Filter results based on the selected criteria and display values
+                    filterRes.forEach((res) =>
+                        filterResultWithSelected(
+                            res,
+                            filterElement,
+                            filterParam
+                        )
+                    );
+                    toggleResultClass(filterRes);
+
+                    firstChangeFlags[filterElement.id] = false;
+                } else {
+                    openResult.forEach((res) =>
+                        filterResultWithSelected(
+                            res,
+                            filterElement,
+                            filterParam
+                        )
+                    );
+                    toggleResultClass(openResult);
+                }
 
                 // Toggle the result class based on visibility
-                toggleResultClass(filterRes);
             }, resultDisplayDelay);
 
         // Usage of debouncedFilterChange for different filter elements for "open" status
@@ -444,21 +430,43 @@ document.addEventListener("DOMContentLoaded", () => {
         };
 
         // Function to debounce changes in the filter input values
+        const firstChangeFlags = {};
+
+        // Function to debounce changes in the filter input values
         const debouncedFilterChange = (
             filterElement,
             filterParam,
             resultClass
         ) =>
             debounce(() => {
-                const filterRes = getVisibleResults(resultClass);
+                const isFirstChange = firstChangeFlags[filterElement.id];
 
-                // Filter results based on the selected criteria and display values
-                filterRes.forEach((res) =>
-                    filterResultWithSelected(res, filterElement, filterParam)
-                );
+                if (isFirstChange === undefined || isFirstChange) {
+                    const filterRes = getVisibleResults(resultClass);
+
+                    // Filter results based on the selected criteria and display values
+                    filterRes.forEach((res) =>
+                        filterResultWithSelected(
+                            res,
+                            filterElement,
+                            filterParam
+                        )
+                    );
+                    toggleResultClass(filterRes);
+
+                    firstChangeFlags[filterElement.id] = false;
+                } else {
+                    soldResult.forEach((res) =>
+                        filterResultWithSelected(
+                            res,
+                            filterElement,
+                            filterParam
+                        )
+                    );
+                    toggleResultClass(soldResult);
+                }
 
                 // Toggle the result class based on visibility
-                toggleResultClass(filterRes);
             }, resultDisplayDelay);
 
         // Usage of debouncedFilterChange for different filter elements for "sold" status
@@ -494,6 +502,16 @@ document.addEventListener("DOMContentLoaded", () => {
 document.addEventListener("DOMContentLoaded", () => {
     // Get the order select element
     const orderSelect = document.getElementById("date-filter");
+
+    Array.from(orderSelect).forEach((option) => {
+        if (
+            getSelectedOptionLabel(propertyStatus) === "sold" &&
+            option.value === "sold"
+        ) {
+            console.log(getSelectedOptionLabel(propertyStatus));
+            option.setAttribute("selected", "selected");
+        }
+    });
 
     // Function to sort property cards by date using merge sort
     const sortByDate = (param) => {
