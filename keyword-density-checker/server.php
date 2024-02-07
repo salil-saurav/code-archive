@@ -45,12 +45,6 @@ function get_body_content_ajax()
     if (isset($_POST['url'])) {
         $url = $_POST['url'];
 
-        // $meta_tags = [];
-        // $meta_tags = get_meta_tags($url);
-        // $include_meta = isset($_POST['include_meta']) && $_POST['include_meta'] === 'true';
-        // $include_title = isset($_POST['include_title']) && $_POST['include_title'] === 'true';
-        // $include_alt_title = isset($_POST['include_alt_title']) && $_POST['include_alt_title'] === 'true';
-
         $content = get_body_content($url);
 
         echo $content;

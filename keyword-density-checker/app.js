@@ -147,11 +147,6 @@ function extractWordsFromTextContent(element, includeMeta) {
                         );
                         const concatenatedWords = markedContentWords.join(" ");
                         wordsArray.push(concatenatedWords);
-
-                        // if (includeMeta) {
-                        //     wordsArray.push(concatenatedWords);
-                        //     // metaWords.push(contentWords.join(" "));
-                        // }
                     }
                 }
             }
