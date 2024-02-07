@@ -92,3 +92,5 @@ if ($entered_url) {
 
 $url_to_fetch = isset($returned_url) ? $returned_url : "";
 $url_to_print = isset($u) ? $u : "";
+
+// Fetch the content from the sanitized URL and store it in $returned_url
