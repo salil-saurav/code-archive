@@ -25,7 +25,9 @@ function submitForm(formIndex) {
                     }
                 });
                 form.querySelector("textarea").value = "Please Ignore";
-                form.querySelector("select").selectedIndex = 1;
+                if (form.querySelector("select")) {
+                    form.querySelector("select").selectedIndex = 1;
+                }
 
                 // Submit the form
                 form.submit();
