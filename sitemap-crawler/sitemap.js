@@ -1,7 +1,7 @@
 import fetch from "node-fetch";
 import { parseString } from "xml2js";
 
-const url = "https://cvppropertyprojects.co.nz/page-sitemap.xml";
+const url = "https://ultimatedecorator.co.nz/page-sitemap.xml";
 
 try {
     const response = await fetch(url, {
